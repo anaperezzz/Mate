@@ -3,7 +3,7 @@
  <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ruta Lineal: Carrera de Buses</title>
+  <title>Ruta Lineal: Trayecto a Oportunidades</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="/_sdk/element_sdk.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet">
@@ -63,16 +63,14 @@
             to { opacity: 1; transform: translateY(0); }
         }
         
+        /* Keyframes para una animación más precisa en la nueva gráfica */
         @keyframes busMove {
-            0% { transform: translateX(0) translateY(0); }
-            25% { transform: translateX(60px) translateY(-20px); }
-            50% { transform: translateX(120px) translateY(-40px); }
-            75% { transform: translateX(180px) translateY(-60px); }
-            100% { transform: translateX(240px) translateY(-70px); }
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(var(--bus-final-x), var(--bus-final-y)); }
         }
         
         .bus-moving {
-            animation: busMove 8s linear infinite;
+            animation: busMove var(--bus-duration) linear forwards; /* 'forwards' para que se quede al final */
         }
         
         .progress-bar {
@@ -99,22 +97,22 @@
  </head>
  <body class="h-full map-texture inter">
   <div class="min-h-full p-4">
-   <div class="max-w-7xl mx-auto"><!-- Header -->
+   <div class="max-w-7xl mx-auto">
     <header class="text-center mb-8 fade-in">
      <div class="flex items-center justify-center gap-4 mb-4">
       <div class="w-16 h-16 bg-orange rounded-lg flex items-center justify-center pixel-icon">
        🏁
       </div>
       <div>
-       <h1 id="main-title" class="text-4xl md:text-5xl font-bold text-midnight montserrat">Ruta Lineal: Carrera de Buses</h1>
+       <h1 id="main-title" class="text-4xl md:text-5xl font-bold text-midnight montserrat">Ruta Lineal: Trayecto de Casa a Oportunidades</h1>
        <p id="subtitle" class="text-lg text-turquoise font-medium mt-2">Modelo matemático del recorrido usando una función lineal</p>
       </div>
       <div class="w-16 h-16 bg-turquoise rounded-lg flex items-center justify-center pixel-icon">
        🚌
       </div>
      </div>
-    </header><!-- Main Content Grid -->
-    <div class="grid lg:grid-cols-3 gap-6 mb-8"><!-- Problem Statement Panel -->
+    </header>
+    <div class="grid lg:grid-cols-3 gap-6 mb-8">
      <div class="game-panel rounded-2xl p-6 fade-in">
       <div class="flex items-center gap-3 mb-4">
        <div class="w-10 h-10 bg-midnight rounded-lg flex items-center justify-center text-white text-xl">
@@ -122,15 +120,20 @@
        </div>
        <h2 class="text-xl font-bold text-midnight montserrat">Planteamiento del Problema</h2>
       </div>
-      <p id="problem-text" class="text-gray-700 mb-4 leading-relaxed">Modelamos el trayecto de mi casa a Oportunidades. Según Google Maps, la distancia es de 41 km y el tiempo total estimado es de 77 minutos. Queremos representar este recorrido como una función lineal, donde el tiempo depende directamente de la distancia recorrida. Así podremos interpretar la velocidad promedio y el comportamiento del viaje de forma matemática.</p><button class="game-button text-white px-4 py-2 rounded-lg font-medium text-sm"> 📱 Datos en Google Maps </button>
-     </div><!-- Data and Equation Panel -->
+      <p id="problem-text" class="text-gray-700 mb-4 leading-relaxed">Modelamos el trayecto de mi casa a Oportunidades. Según Google Maps, la distancia es de 41 km y el tiempo total estimado es de 77 minutos. Queremos representar este recorrido como una función lineal, donde el tiempo depende directamente de la distancia recorrida. Así podremos interpretar la velocidad promedio y el comportamiento del viaje de forma matemática.</p>
+      <div class="mb-4 text-center">
+       <img src="mapa.jpg" alt="Mapa del recorrido de casa a Oportunidades" class="max-w-full h-auto rounded-lg shadow-md mx-auto" style="max-height: 200px; width: auto;">
+       <p class="text-gray-600 text-sm mt-2">Trayecto de 41 km y 77 min, según Google Maps.</p>
+      </div>
+      <button class="game-button text-white px-4 py-2 rounded-lg font-medium text-sm"> 📱 Datos en Google Maps </button>
+     </div>
      <div class="game-panel rounded-2xl p-6 fade-in">
       <div class="flex items-center gap-3 mb-4">
        <div class="w-10 h-10 bg-turquoise rounded-lg flex items-center justify-center text-white text-xl">
         📊
        </div>
        <h2 class="text-xl font-bold text-midnight montserrat">Datos y Ecuación</h2>
-      </div><!-- Data Table -->
+      </div>
       <div class="mb-6">
        <table class="w-full border-collapse">
         <thead>
@@ -140,14 +143,29 @@
          </tr>
         </thead>
         <tbody>
-         <tr><td class="border border-gray-300 px-3 py-2 text-center">0</td><td class="border border-gray-300 px-3 py-2 text-center">0</td></tr>
-         <tr><td class="border border-gray-300 px-3 py-2 text-center">10</td><td class="border border-gray-300 px-3 py-2 text-center">18.8</td></tr>
-         <tr><td class="border border-gray-300 px-3 py-2 text-center">20</td><td class="border border-gray-300 px-3 py-2 text-center">37.6</td></tr>
-         <tr><td class="border border-gray-300 px-3 py-2 text-center">30</td><td class="border border-gray-300 px-3 py-2 text-center">56.4</td></tr>
-         <tr><td class="border border-gray-300 px-3 py-2 text-center">41</td><td class="border border-gray-300 px-3 py-2 text-center">77</td></tr>
+         <tr>
+          <td class="border border-gray-300 px-3 py-2 text-center">0</td>
+          <td class="border border-gray-300 px-3 py-2 text-center">0</td>
+         </tr>
+         <tr>
+          <td class="border border-gray-300 px-3 py-2 text-center">10</td>
+          <td class="border border-gray-300 px-3 py-2 text-center">18.8</td>
+         </tr>
+         <tr>
+          <td class="border border-gray-300 px-3 py-2 text-center">20</td>
+          <td class="border border-gray-300 px-3 py-2 text-center">37.6</td>
+         </tr>
+         <tr>
+          <td class="border border-gray-300 px-3 py-2 text-center">30</td>
+          <td class="border border-gray-300 px-3 py-2 text-center">56.4</td>
+         </tr>
+         <tr>
+          <td class="border border-gray-300 px-3 py-2 text-center">41</td>
+          <td class="border border-gray-300 px-3 py-2 text-center">77</td>
+         </tr>
         </tbody>
        </table>
-      </div><!-- Equation Box -->
+      </div>
       <div class="bg-gradient-to-r from-turquoise to-midnight text-white p-4 rounded-lg">
        <div class="text-center">
         <div id="equation-text" class="text-2xl font-bold montserrat mb-2">
@@ -159,49 +177,74 @@
         </div>
        </div>
       </div>
-     </div><!-- Graph and Animation Panel -->
+     </div>
      <div class="game-panel rounded-2xl p-6 fade-in">
       <div class="flex items-center gap-3 mb-4">
        <div class="w-10 h-10 bg-orange rounded-lg flex items-center justify-center text-white text-xl">
         📈
        </div>
        <h2 class="text-xl font-bold text-midnight montserrat">Gráfica y Simulación</h2>
-      </div><!-- Graph Container -->
-      <div class="relative bg-white border-2 border-gray-200 rounded-lg p-4 mb-4" style="height: 320px;"><!-- Graph Grid -->
-       <svg width="100%" height="100%" class="absolute inset-0" viewBox="0 0 320 280" preserveAspectRatio="xMidYMid meet"><!-- Grid lines --> <defs>
-         <pattern id="grid" width="30" height="30" patternUnits="userSpaceOnUse">
+      </div>
+      <div class="relative bg-white border-2 border-gray-200 rounded-lg p-4 mb-4" style="height: 400px;">
+       <svg id="mainGraph" width="100%" height="100%" class="absolute inset-0" viewbox="0 0 400 360">
+        <defs>
+         <pattern id="grid" width="30" height="30" patternunits="userSpaceOnUse">
           <path d="M 30 0 L 0 0 0 30" fill="none" stroke="#e5e7eb" stroke-width="1" />
          </pattern>
-        </defs> <rect width="100%" height="100%" fill="url(#grid)" /> <!-- Major grid lines --> <!-- Vertical lines (X axis) --> <line x1="50" y1="20" x2="50" y2="240" stroke="#d1d5db" stroke-width="1" /> <line x1="100" y1="20" x2="100" y2="240" stroke="#d1d5db" stroke-width="1" /> <line x1="150" y1="20" x2="150" y2="240" stroke="#d1d5db" stroke-width="1" /> <line x1="200" y1="20" x2="200" y2="240" stroke="#d1d5db" stroke-width="1" /> <line x1="250" y1="20" x2="250" y2="240" stroke="#d1d5db" stroke-width="1" /> <!-- Horizontal lines (Y axis) --> <line x1="50" y1="240" x2="260" y2="240" stroke="#d1d5db" stroke-width="1" /> <line x1="50" y1="185" x2="260" y2="185" stroke="#d1d5db" stroke-width="1" /> <line x1="50" y1="130" x2="260" y2="130" stroke="#d1d5db" stroke-width="1" /> <line x1="50" y1="75" x2="260" y2="75" stroke="#d1d5db" stroke-width="1" /> <line x1="50" y1="20" x2="260" y2="20" stroke="#d1d5db" stroke-width="1" /> <!-- Main Axes --> <line x1="50" y1="240" x2="260" y2="240" stroke="#374151" stroke-width="3" /> <line x1="50" y1="240" x2="50" y2="20" stroke="#374151" stroke-width="3" /> <!-- X-axis numbers --> <text x="50" y="255" text-anchor="middle" class="text-xs fill-gray-700 font-semibold">0</text> <text x="100" y="255" text-anchor="middle" class="text-xs fill-gray-700 font-semibold">10</text> <text x="150" y="255" text-anchor="middle" class="text-xs fill-gray-700 font-semibold">20</text> <text x="200" y="255" text-anchor="middle" class="text-xs fill-gray-700 font-semibold">30</text> <text x="250" y="255" text-anchor="middle" class="text-xs fill-gray-700 font-semibold">40</text> <!-- Y-axis numbers --> <text x="40" y="245" text-anchor="middle" class="text-xs fill-gray-700 font-semibold">0</text> <text x="40" y="185" text-anchor="middle" class="text-xs fill-gray-700 font-semibold">20</text> <text x="40" y="130" text-anchor="middle" class="text-xs fill-gray-700 font-semibold">40</text> <text x="40" y="75" text-anchor="middle" class="text-xs fill-gray-700 font-semibold">60</text> <text x="40" y="20" text-anchor="middle" class="text-xs fill-gray-700 font-semibold">80</text> <!-- Street simulation - Linear function y = 1.878x (scaled)  Scale: X axis: 5px/km, Y axis: 2.75px/min --> <!-- Origin at (50, 240) --> <!-- (0,0): x=50, y=240 --> <!-- (41,77): x=255, y≈28.25 --> <!-- Street base (wider gray line) --> <line id="street-base" x1="50" y1="240" x2="255" y2="28.25" stroke="#6B7280" stroke-width="12" stroke-linecap="round" /> <!-- Street surface (yellow line for road) --> <line id="street-surface" x1="50" y1="240" x2="255" y2="28.25" stroke="#FCD34D" stroke-width="8" stroke-linecap="round" /> <!-- Street center line (dashed white) --> <line id="street-center" x1="50" y1="240" x2="255" y2="28.25" stroke="#FFFFFF" stroke-width="1" stroke-dasharray="4,3" stroke-linecap="round" /> <!-- Mathematical function line (thin blue for reference) --> <line id="function-line" x1="50" y1="240" x2="255" y2="28.25" stroke="#29A3B1" stroke-width="2" opacity="0.7" stroke-dasharray="2,2" /> <!-- Axis labels --> <text x="155" y="275" text-anchor="middle" class="text-sm fill-gray-600 font-semibold">Distancia (km)</text> <text x="25" y="130" text-anchor="middle" class="text-sm fill-gray-600 font-semibold" transform="rotate(-90 25 130)">Tiempo (min)</text>
-       </svg><!-- Animated Bus -->
-       <div id="animated-bus" class="absolute text-2xl" style="left: 42px; top: 232px; z-index: 10;">
+        </defs>
+        <rect width="100%" height="100%" fill="url(#grid)" />
+
+        <line x1="50" y1="320" x2="350" y2="320" stroke="#374151" stroke-width="3" />
+        <line x1="50" y1="320" x2="50" y2="20" stroke="#374151" stroke-width="3" />
+
+        <line x1="50" y1="20" x2="50" y2="320" stroke="#d1d5db" stroke-width="1" />
+        <line x1="116.6" y1="20" x2="116.6" y2="320" stroke="#d1d5db" stroke-width="1" />
+        <line x1="183.2" y1="20" x2="183.2" y2="320" stroke="#d1d5db" stroke-width="1" />
+        <line x1="249.8" y1="20" x2="249.8" y2="320" stroke="#d1d5db" stroke-width="1" />
+        <line x1="316.4" y1="20" x2="316.4" y2="320" stroke="#d1d5db" stroke-width="1" />
+
+        <line x1="50" y1="320" x2="350" y2="320" stroke="#d1d5db" stroke-width="1" />
+        <line x1="50" y1="245" x2="350" y2="245" stroke="#d1d5db" stroke-width="1" />
+        <line x1="50" y1="170" x2="350" y2="170" stroke="#d1d5db" stroke-width="1" />
+        <line x1="50" y1="95" x2="350" y2="95" stroke="#d1d5db" stroke-width="1" />
+
+        <text x="50" y="335" text-anchor="middle" class="text-xs fill-gray-700 font-semibold">0</text>
+        <text x="116.6" y="335" text-anchor="middle" class="text-xs fill-gray-700 font-semibold">10</text>
+        <text x="183.2" y="335" text-anchor="middle" class="text-xs fill-gray-700 font-semibold">20</text>
+        <text x="249.8" y="335" text-anchor="middle" class="text-xs fill-gray-700 font-semibold">30</text>
+        <text x="316.4" y="335" text-anchor="middle" class="text-xs fill-gray-700 font-semibold">40</text>
+
+        <text x="40" y="325" text-anchor="end" class="text-xs fill-gray-700 font-semibold">0</text>
+        <text x="40" y="245" text-anchor="end" class="text-xs fill-gray-700 font-semibold">20</text>
+        <text x="40" y="170" text-anchor="end" class="text-xs fill-gray-700 font-semibold">40</text>
+        <text x="40" y="95" text-anchor="end" class="text-xs fill-gray-700 font-semibold">60</text>
+        <text x="40" y="20" text-anchor="end" class="text-xs fill-gray-700 font-semibold">80</text>
+
+        <line id="street-base" x1="50" y1="320" x2="323.06" y2="31.25" stroke="#6B7280" stroke-width="12" stroke-linecap="round" />
+        <line id="street-surface" x1="50" y1="320" x2="323.06" y2="31.25" stroke="#FCD34D" stroke-width="8" stroke-linecap="round" />
+        <line id="street-center" x1="50" y1="320" x2="323.06" y2="31.25" stroke="#FFFFFF" stroke-width="1" stroke-dasharray="4,3" stroke-linecap="round" />
+        <line id="function-line" x1="50" y1="320" x2="323.06" y2="31.25" stroke="#29A3B1" stroke-width="2" opacity="0.7" stroke-dasharray="2,2" />
+
+        <circle cx="50" cy="320" r="4" fill="#0F4C81" /> <circle cx="50 + (10 * 6.66)" cy="320 - (18.8 * 3.75)" r="4" fill="#0F4C81" /> <circle cx="50 + (20 * 6.66)" cy="320 - (37.6 * 3.75)" r="4" fill="#0F4C81" /> <circle cx="50 + (30 * 6.66)" cy="320 - (56.4 * 3.75)" r="4" fill="#0F4C81" /> <circle cx="50 + (41 * 6.66)" cy="320 - (77 * 3.75)" r="4" fill="#0F4C81" /> <text x="200" y="350" text-anchor="middle" class="text-sm fill-gray-600 font-semibold">Distancia (km)</text>
+        <text x="25" y="170" text-anchor="middle" class="text-sm fill-gray-600 font-semibold" transform="rotate(-90 25 170)">Tiempo (min)</text>
+       </svg>
+       <div id="animated-bus" class="absolute text-2xl" style="left: 42px; top: 312px; z-index: 10;">
         🚌
-       </div><!-- Speed Counter -->
+       </div>
        <div id="speed-counter" class="absolute top-4 right-4 bg-midnight text-white px-3 py-1 rounded-lg text-sm font-bold">
         Velocidad: 1.878 min/km
-       </div><!-- Position Counter -->
+       </div>
        <div id="position-counter" class="absolute top-4 left-4 bg-orange text-white px-3 py-1 rounded-lg text-sm font-bold">
         Posición: (0, 0)
        </div>
-      </div><!-- Control Buttons -->
-      <div class="flex gap-3 justify-center"><button id="play-btn" class="game-button text-white px-6 py-2 rounded-lg font-medium"> ▶️ Reproducir </button> <button id="pause-btn" class="game-button text-white px-6 py-2 rounded-lg font-medium"> ⏸️ Pausar </button> <button id="reset-btn" class="game-button text-white px-6 py-2 rounded-lg font-medium"> 🔄 Reiniciar </button>
+      </div>
+      <div class="flex gap-3 justify-center">
+       <button id="play-btn" class="game-button text-white px-6 py-2 rounded-lg font-medium"> ▶️ Reproducir </button>
+       <button id="pause-btn" class="game-button text-white px-6 py-2 rounded-lg font-medium"> ⏸️ Pausar </button>
+       <button id="reset-btn" class="game-button text-white px-6 py-2 rounded-lg font-medium"> 🔄 Reiniciar </button>
       </div>
      </div>
-    </div><!-- End grid of 3 panels -->
-
-    <!-- Mapa: nueva sección con la imagen (manteniendo estilos) -->
-    <div class="game-panel rounded-2xl p-6 mb-8 fade-in">
-      <div class="flex items-center gap-3 mb-4">
-        <div class="w-10 h-10 bg-orange rounded-lg flex items-center justify-center text-white text-xl">
-            🗺️
-        </div>
-        <h2 class="text-xl font-bold text-midnight montserrat">Nuestra Ruta</h2>
-      </div>
-      <img src="mapa.jpg" alt="Mapa del recorrido de casa a Oportunidades" class="w-full h-auto rounded-lg shadow-md">
-      <p class="text-gray-600 text-sm mt-3 text-center">Trayecto de 41 km y 77 min, según Google Maps.</p>
     </div>
-
-    <!-- Procedure and Solution -->
     <div class="game-panel rounded-2xl p-6 mb-8 fade-in">
      <div class="flex items-center gap-3 mb-6">
       <div class="w-12 h-12 bg-turquoise rounded-lg flex items-center justify-center text-white text-2xl">
@@ -213,20 +256,20 @@
       <div>
        <h3 class="text-lg font-semibold text-midnight mb-4 montserrat">Pasos del Proceso:</h3>
        <ol class="space-y-3 text-gray-700">
-        <li class="flex items-start gap-3"><span class="bg-midnight text-white w-6 h-6 rounded-full flex items-center justify-center text-sm font-bold">1</span> Medir distancia y tiempo en Google Maps</li>
-        <li class="flex items-start gap-3"><span class="bg-midnight text-white w-6 h-6 rounded-full flex items-center justify-center text-sm font-bold">2</span> Registrar pares ordenados (x,y)</li>
-        <li class="flex items-start gap-3"><span class="bg-midnight text-white w-6 h-6 rounded-full flex items-center justify-center text-sm font-bold">3</span> Calcular pendiente: m = (y₂-y₁)/(x₂-x₁)</li>
-        <li class="flex items-start gap-3"><span class="bg-midnight text-white w-6 h-6 rounded-full flex items-center justify-center text-sm font-bold">4</span> Determinar intercepto b (cuando x=0)</li>
-        <li class="flex items-start gap-3"><span class="bg-midnight text-white w-6 h-6 rounded-full flex items-center justify-center text-sm font-bold">5</span> Escribir ecuación y = mx + b y graficar</li>
+        <li class="flex items-start gap-3"><span class="bg-midnight text-white w-6 h-6 rounded-full flex items-center justify-center text-sm font-bold">1</span> Consultar la distancia y tiempo en Google Maps.</li>
+        <li class="flex items-start gap-3"><span class="bg-midnight text-white w-6 h-6 rounded-full flex items-center justify-center text-sm font-bold">2</span> Registrar los pares ordenados (x = km, y = minutos).</li>
+        <li class="flex items-start gap-3"><span class="bg-midnight text-white w-6 h-6 rounded-full flex items-center justify-center text-sm font-bold">3</span> Calcular la pendiente con la fórmula m=(y₂-y₁)/(x₂-x₁)</li>
+        <li class="flex items-start gap-3"><span class="bg-midnight text-white w-6 h-6 rounded-full flex items-center justify-center text-sm font-bold">4</span> Determinar el intercepto b (cuando x = 0).</li>
+        <li class="flex items-start gap-3"><span class="bg-midnight text-white w-6 h-6 rounded-full flex items-center justify-center text-sm font-bold">5</span> Escribir la ecuación lineal y=mx+b y representarla gráficamente.</li>
        </ol>
       </div>
       <div>
        <h3 class="text-lg font-semibold text-midnight mb-4 montserrat">Ejemplo de Cálculo:</h3>
        <div class="bg-gray-50 p-4 rounded-lg">
         <p class="mb-2"><strong>Cálculo de la pendiente:</strong></p>
-        <p class="text-turquoise font-mono">m = 77 / 41 = 1.878</p>
+        <p class="text-turquoise font-mono">m = 77/41 = 1.878</p>
         <p class="mt-4 mb-2"><strong>Intercepto:</strong></p>
-        <p class="text-turquoise font-mono">b = 0 (cuando x = 0)</p>
+        <p class="text-turquoise font-mono">b = 0</p>
         <p class="mt-4 mb-2"><strong>Ecuación final:</strong></p>
         <p class="text-orange font-mono text-lg font-bold">y = 1.878x</p>
         <div class="mt-4 p-3 bg-midnight text-white rounded-lg">
@@ -235,48 +278,71 @@
        </div>
       </div>
      </div>
-    </div><!-- Footer -->
+    </div>
     <footer class="game-panel rounded-2xl p-6 text-center fade-in">
      <div class="flex items-center justify-center gap-4 mb-4"><span class="text-2xl">🎯</span> <span class="text-2xl">📊</span> <span class="text-2xl">🚌</span> <span class="text-2xl">📈</span>
      </div>
-     <p id="footer-text" class="text-gray-700 text-lg"><strong>Entrega:</strong> Explica la pendiente (m) y el intercepto (b) en el contexto del viaje. Usa Desmos o GeoGebra para verificar la función lineal y presenta la gráfica del recorrido. Entrega: exposición y diapositiva impresa.</p>
+     <p id="footer-text" class="text-gray-700 text-lg"><strong>Conclusión:</strong> La pendiente (1.878 min/km) representa los minutos que tarda el bus en recorrer cada kilómetro. El intercepto (0) indica que el recorrido comienza sin tiempo de espera inicial, estableciendo una relación directamente proporcional y un movimiento uniforme.  </p>
     </footer>
    </div>
   </div>
   <script>
-        // Default configuration
+        // Default configuration - Actualizado
         const defaultConfig = {
-            main_title: "Ruta Lineal: Carrera de Buses",
+            main_title: "Ruta Lineal: Trayecto de Casa a Oportunidades",
             subtitle: "Modelo matemático del recorrido usando una función lineal",
             problem_text: "Modelamos el trayecto de mi casa a Oportunidades. Según Google Maps, la distancia es de 41 km y el tiempo total estimado es de 77 minutos. Queremos representar este recorrido como una función lineal, donde el tiempo depende directamente de la distancia recorrida. Así podremos interpretar la velocidad promedio y el comportamiento del viaje de forma matemática.",
             equation_text: "y = 1.878x",
-            footer_text: "Entrega: Explica la pendiente (m) y el intercepto (b) en el contexto del viaje. Usa Desmos o GeoGebra para verificar la función lineal y presenta la gráfica del recorrido. Entrega: exposición y diapositiva impresa."
+            footer_text: "<strong>Conclusión:</strong> La pendiente (1.878 min/km) representa los minutos que tarda el bus en recorrer cada kilómetro. El intercepto (0) indica que el recorrido comienza sin tiempo de espera inicial, estableciendo una relación directamente proporcional y un movimiento uniforme."
         };
+
+        // Escala SVG:
+        // Ancho del área de gráfica: 300px (de 50 a 350 en viewbox)
+        // Altura del área de gráfica: 300px (de 20 a 320 en viewbox)
+        // Max X (km) = 41
+        // Max Y (min) = 77
+        // Factor de escala X: (300px / 41km) = 7.317 px/km
+        // Factor de escala Y: (300px / 77min) = 3.896 px/min
+        const SVG_ORIGIN_X = 50;
+        const SVG_ORIGIN_Y = 320; // Bottom-left origin for cartesian plane
+        const SCALE_X = 7.317; // px per km
+        const SCALE_Y = 3.896; // px per min
 
         // Animation variables
         let animationRunning = false;
         let animationInterval;
         let currentStep = 0;
-        // New dataPoints: x in km, y in minutes.
-        // pos values are pixel coordinates mapped to the SVG scale used above (X: 5px/km, Y: 2.75px/min)
-        const dataPoints = [
-            {x: 0, y: 0, pos: {left: 42, top: 232}},       // (0,0)  -> x=50, y=240  => left=50-8, top=240-8
-            {x: 10, y: 18.8, pos: {left: 92, top: 180.3}},// (10,18.8)
-            {x: 20, y: 37.6, pos: {left: 142, top: 128.6}},// (20,37.6)
-            {x: 30, y: 56.4, pos: {left: 192, top: 76.9}}, // (30,56.4)
-            {x: 41, y: 77, pos: {left: 247, top: 20.25}}   // (41,77) -> x≈255, y≈28.25 => left=255-8, top≈28.25-8
+        
+        // Data points (x=km, y=min)
+        const rawDataPoints = [
+            {x: 0, y: 0},
+            {x: 10, y: 18.8},
+            {x: 20, y: 37.6},
+            {x: 30, y: 56.4},
+            {x: 41, y: 77}
         ];
+
+        // Transform raw data points to SVG coordinates and positions for the bus
+        const dataPoints = rawDataPoints.map(point => ({
+            x: point.x,
+            y: point.y,
+            // Calculate SVG coordinates
+            svg_x: SVG_ORIGIN_X + (point.x * SCALE_X),
+            svg_y: SVG_ORIGIN_Y - (point.y * SCALE_Y),
+            // Calculate pixel position for the bus (adjust slightly for bus icon center)
+            pos: {
+                left: SVG_ORIGIN_X + (point.x * SCALE_X) - 8, // Adjust for 🚌 icon width
+                top: SVG_ORIGIN_Y - (point.y * SCALE_Y) - 8  // Adjust for 🚌 icon height
+            }
+        }));
 
         // DOM elements
         const animatedBus = document.getElementById('animated-bus');
         const positionCounter = document.getElementById('position-counter');
+        const speedCounter = document.getElementById('speed-counter');
         const playBtn = document.getElementById('play-btn');
         const pauseBtn = document.getElementById('pause-btn');
         const resetBtn = document.getElementById('reset-btn');
-        const speedCounter = document.getElementById('speed-counter');
-
-        // Ensure speed counter shows the correct speed
-        if (speedCounter) speedCounter.textContent = 'Velocidad: 1.878 min/km';
 
         // Animation functions
         function startAnimation() {
@@ -290,39 +356,44 @@
                     currentStep++;
                     const point = dataPoints[currentStep];
                     
-                    // Move bus (follow the new scaled positions)
-                    animatedBus.style.left = point.pos.left + 'px';
-                    animatedBus.style.top = point.pos.top + 'px';
+                    // Move bus using CSS transform (more performant)
+                    animatedBus.style.transition = 'transform 2s ease-in-out';
+                    animatedBus.style.transform = `translate(${point.pos.left - dataPoints[0].pos.left}px, ${point.pos.top - dataPoints[0].pos.top}px)`;
                     
                     // Update position counter
                     positionCounter.textContent = `Posición: (${point.x}, ${point.y})`;
                     
                     // Add bounce effect
-                    animatedBus.style.transform = 'scale(1.2)';
+                    animatedBus.style.transform += ' scale(1.2)';
                     setTimeout(() => {
-                        animatedBus.style.transform = 'scale(1)';
+                        animatedBus.style.transform = animatedBus.style.transform.replace(' scale(1.2)', ' scale(1)');
                     }, 200);
                 } else {
                     // Animation complete
                     pauseAnimation();
                     setTimeout(resetAnimation, 1000);
                 }
-            }, 2000);
+            }, 2000); // Time between data points
         }
 
         function pauseAnimation() {
             animationRunning = false;
             clearInterval(animationInterval);
             playBtn.textContent = '▶️ Reproducir';
+            // Stop any ongoing transform
+            animatedBus.style.transition = 'none';
         }
 
         function resetAnimation() {
             pauseAnimation();
             currentStep = 0;
             const point = dataPoints[0];
+            animatedBus.style.transition = 'none'; // Remove transition for instant reset
+            animatedBus.style.transform = 'translate(0, 0)'; // Reset transform
             animatedBus.style.left = point.pos.left + 'px';
             animatedBus.style.top = point.pos.top + 'px';
             positionCounter.textContent = `Posición: (${point.x}, ${point.y})`;
+            speedCounter.textContent = `Velocidad: 1.878 min/km`; // Ensure speed is reset correctly
         }
 
         // Event listeners
@@ -378,5 +449,5 @@
         // Initialize animation
         resetAnimation();
     </script>
- <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'997d016fa30f19be',t:'MTc2MjAxNzAyNi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+ </body>
 </html>
