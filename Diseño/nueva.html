@@ -1,0 +1,602 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Programa Oportunidades — Interactivo (Gráfica Única con 3 filtros)</title>
+
+  <!-- Font Awesome (íconos) -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    :root{
+      --red:#b71c1c;
+      --red-strong:#c62828;
+      --muted:#f5f0ee;
+      --dark:#222;
+      --card:#fff;
+      --accent:#e53935;
+      --grid:#e6eef6;
+      --notebook-grid-1: rgba(0,0,0,0.03);
+      --notebook-grid-2: rgba(0,0,0,0.04);
+      --highlight: #f6c85f;
+      --btn-bg: linear-gradient(90deg,#fff,#fff);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      background:var(--muted);
+      color:var(--dark);
+      -webkit-font-smoothing:antialiased;
+    }
+
+    header{
+      text-align:center;
+      padding:28px 16px;
+      background:linear-gradient(90deg,#7f0000,#b71c1c);
+      color:white;
+    }
+    header h1{ margin:0; font-size:28px; letter-spacing:.4px; }
+    header p{ margin:6px 0 0; opacity:.95; max-width:900px; margin-left:auto;margin-right:auto;}
+
+    main.container{
+      display:grid;
+      grid-template-columns: 1fr 360px;
+      gap:20px;
+      max-width:1200px;
+      margin:28px auto;
+      padding:0 16px 60px;
+      align-items:start;
+    }
+
+    .map-panel{
+      background:#8b1b1b;
+      color:white;
+      border-radius:16px;
+      padding:18px;
+      position:relative;
+      min-height:480px;
+      box-shadow:0 8px 30px rgba(0,0,0,.12);
+      overflow:hidden;
+    }
+
+    .map-wrap{
+      display:block;
+      width:100%;
+      height:420px;
+      position:relative;
+    }
+
+    .cta-box{
+      position:absolute;
+      left:22px;
+      bottom:22px;
+      background:rgba(0,0,0,.45);
+      color:#fff;
+      padding:12px 18px;
+      border-radius:12px;
+      display:flex;
+      align-items:center;
+      gap:12px;
+      max-width:340px;
+      cursor:pointer;
+    }
+    .cta-box .hand{ font-size:22px; opacity:.95 }
+    .cta-box:hover{ transform:translateY(-3px); transition:transform .18s ease;}
+
+    .stats-panel{
+      background:var(--card);
+      border-radius:16px;
+      padding:18px;
+      box-shadow:0 8px 30px rgba(0,0,0,.06);
+    }
+
+    .stat-card{
+      display:flex;
+      gap:14px;
+      align-items:center;
+      padding:14px;
+      border-radius:10px;
+      margin-bottom:12px;
+      background:var(--btn-bg);
+    }
+    .stat-card .icon{
+      width:54px;height:54px;border-radius:12px;
+      background:var(--accent); color:white; display:flex;
+      align-items:center; justify-content:center; font-size:20px;
+    }
+    .stat-card .num{ font-size:22px; font-weight:700; color:var(--red-strong) }
+    .stat-card .text{ font-size:13px; opacity:.9 }
+
+    /* botón nuevo "Consultar datos o gráficas" */
+    .consult-btn {
+      display:block;
+      width:100%;
+      margin-top:12px;
+      padding:10px 14px;
+      border-radius:10px;
+      border:2px solid rgba(0,0,0,0.06);
+      background:linear-gradient(90deg,#fff,#fff);
+      font-weight:700;
+      color:var(--dark);
+      cursor:pointer;
+      box-shadow: 0 8px 18px rgba(0,0,0,0.04);
+    }
+    .consult-btn:hover{ transform:translateY(-3px); transition:transform .18s ease; }
+
+    /* OVERLAY / MODAL */
+    #modal-graficas{
+      position:fixed;
+      inset:0;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      background:rgba(0,0,0,0.35);
+      z-index:2000;
+      padding:22px;
+      overflow:auto;
+    }
+    .modal-card{
+      width:min(1100px,98%);
+      background:#fff;
+      border-radius:12px;
+      padding:18px;
+      box-shadow:0 30px 80px rgba(0,0,0,.45);
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+
+    .modal-header{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+    }
+    .modal-title{ font-size:18px; font-weight:800; }
+
+    .filters {
+      display:flex;
+      gap:10px;
+      align-items:center;
+    }
+    .filter-btn {
+      padding:8px 12px;
+      border-radius:10px;
+      border:1px solid #ddd;
+      background:linear-gradient(90deg,#fff,#fff);
+      cursor:pointer;
+      font-weight:700;
+    }
+    .filter-btn.active{
+      background:linear-gradient(90deg,#fef0ef,#ffdede);
+      border-color:var(--red-strong);
+      color:var(--red-strong);
+      box-shadow:0 6px 18px rgba(199,0,0,0.08);
+    }
+
+    .chart-area{
+      background:#fff;
+      border-radius:10px;
+      padding:16px;
+      border:1px solid #eee;
+      margin-top:6px;
+      background-image:
+        linear-gradient(to right, rgba(0,0,0,0.04) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(0,0,0,0.04) 1px, transparent 1px);
+      background-size: 26px 26px;
+    }
+    .chart-area canvas{
+      width:100% !important;
+      min-height:420px !important;
+      display:block;
+    }
+
+    .slope-badge{
+      display:inline-flex;
+      gap:8px;
+      align-items:center;
+      padding:8px 10px;
+      border-radius:10px;
+      background:linear-gradient(90deg,#fff,#fff);
+      border:1px solid #eee;
+      font-weight:700;
+    }
+
+    .close-modal{
+      background:#fff;border:1px solid #ddd;padding:8px 12px;border-radius:10px;cursor:pointer;
+    }
+
+    /* RESPONSIVE */
+    @media (max-width:960px){
+      main.container{ grid-template-columns: 1fr; }
+      .chart-area canvas{ min-height:320px !important; }
+      .modal-card{ padding:12px; }
+      .filters{ flex-wrap:wrap; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Programa Oportunidades</h1>
+    <p>Empoderando a jóvenes salvadoreños mediante herramientas educativas y oportunidades de formación y empleo.</p>
+  </header>
+
+  <main class="container">
+    <!-- Izquierda: mapa (se mantiene en mayor parte) -->
+    <section class="map-panel" aria-label="Mapa de El Salvador">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <strong style="font-size:18px">Explora nuestras sedes</strong>
+        <small style="opacity:.85">Haz clic en un departamento</small>
+      </div>
+
+      <div class="map-wrap" id="mapWrap">
+        <!-- SVG simplificado / decorativo -->
+        <svg class="map-svg" viewBox="0 0 900 480" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Mapa interactivo de El Salvador">
+          <rect x="0" y="0" width="900" height="480" fill="#8b1b1b" rx="8" />
+          <!-- shapes (no interactivos en este ejemplo) -->
+          <circle cx="170" cy="120" r="10" fill="#fff" stroke="#b71c1c" stroke-width="3"></circle>
+          <circle cx="220" cy="260" r="10" fill="#fff" stroke="#b71c1c" stroke-width="3"></circle>
+          <circle cx="370" cy="160" r="10" fill="#fff" stroke="#b71c1c" stroke-width="3"></circle>
+          <circle cx="740" cy="230" r="10" fill="#fff" stroke="#b71c1c" stroke-width="3"></circle>
+        </svg>
+      </div>
+
+      <div class="cta-box" id="ctaClick">
+        <div style="font-size:18px">📍</div>
+        <div>
+          <div style="font-weight:700">Explora nuestras sedes</div>
+          <div style="font-size:13px;opacity:.95">Haz clic en cada departamento para ver detalles</div>
+        </div>
+        <div class="hand">🖱️</div>
+      </div>
+    </section>
+
+    <!-- Derecha: estadísticas globales + botón -->
+    <aside class="stats-panel" aria-label="Estadísticas generales del programa">
+      <div style="margin-bottom:10px"><strong>Estadísticas Globales</strong></div>
+
+      <div class="stat-card">
+        <div class="icon"><i class="fa-solid fa-people-group"></i></div>
+        <div>
+          <div class="num">389</div>
+          <div class="text">Jóvenes Impactados</div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="icon"><i class="fa-solid fa-graduation-cap"></i></div>
+        <div>
+          <div class="num">394</div>
+          <div class="text">Jóvenes matriculados</div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="icon"><i class="fa-solid fa-briefcase"></i></div>
+        <div>
+          <div class="num">301</div>
+          <div class="text">Becas otorgadas</div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="icon"><i class="fa-solid fa-dollar-sign"></i></div>
+        <div>
+          <div class="num">40</div>
+          <div class="text">Universidades con alianzas</div>
+        </div>
+      </div>
+
+      <!-- BOTÓN que pediste: abre modal con la nueva gráfica -->
+      <button id="openGrafBtn" class="consult-btn">Consultar datos o gráficas</button>
+    </aside>
+  </main>
+
+  <!-- MODAL: Una sola gráfica que cambia con filtros -->
+  <div id="modal-graficas" role="dialog" aria-hidden="true">
+    <div class="modal-card" role="document">
+      <div class="modal-header">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div class="modal-title">Visualizador de Datos — Una sola gráfica (3 filtros)</div>
+          <div class="slope-badge" title="Pendiente promedio">
+            <span class="icon">📈</span>
+            <span id="slopeValue">Pendiente: —</span>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <div class="filters" id="filters">
+            <button class="filter-btn active" data-filter="genero">Género</button>
+            <button class="filter-btn" data-filter="edad">Edad</button>
+            <button class="filter-btn" data-filter="zona">Zona demográfica</button>
+          </div>
+          <button class="close-modal" id="closeModal">Cerrar ✕</button>
+        </div>
+      </div>
+
+      <div class="chart-area">
+        <canvas id="singleChart"></canvas>
+        <div style="margin-top:10px;font-size:13px;color:#444" id="chartInterpretation">
+          Selecciona un filtro para ver la gráfica y la interpretación matemática (pendiente m).
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer style="text-align:center;padding:20px 12px;opacity:.85;">
+    © 2025 Programa Oportunidades — Demo interactiva
+  </footer>
+
+<script>
+/* =========================
+   Datos para la gráfica
+   =========================
+   - Sedes (orden fijo en X)
+   - Datos convertidos (porcentajes donde aplica)
+*/
+const SEDES = ['San Salvador','Santa Ana','Sonsonate','San Miguel'];
+
+/* 1) Distribución por género (porcentajes)
+   Provided:
+   - San Salvador 60% niñas 40% niños (already %)
+   - Santa Ana 67 niñas 40 niños -> convert to %
+   - Sonsonate 28 niñas 21 niños -> convert to %
+   - San Miguel 26 niñas 22 niños -> convert to %
+   (los porcentajes se calcularon y fijan aquí)
+*/
+const GENERO = {
+  labels: SEDES,
+  girls: [60.00, 62.62, 57.14, 54.17], // niñas %
+  boys:  [40.00, 37.38, 42.86, 45.83]  // niños %
+};
+
+/* 2) Distribución por edad
+   Tienes rangos; aquí uso el punto medio de cada rango como valor numérico para Y
+   - San Salvador: 14-17 -> 15.5
+   - Santa Ana: 17-19 -> 18
+   - Sonsonate: 17-18 -> 17.5
+   - San Miguel: 17-19 -> 18
+*/
+const EDAD = {
+  labels: SEDES,
+  midpoints: [15.5, 18.0, 17.5, 18.0]
+};
+
+/* 3) Zona demográfica (cantidad de departamentos por sede)
+   - San Salvador: 4
+   - Santa Ana: 4
+   - Sonsonate: 16
+   - San Miguel: 4
+*/
+const ZONA = {
+  labels: SEDES,
+  departamentos: [4,4,16,4]
+};
+
+/* Chart.js instance */
+let singleChart = null;
+
+/* Util: calcula pendiente promedio m = (y_f - y_i) / (x_f - x_i)
+   - x será la posición numérica de la sede en la secuencia (1..n)
+*/
+function calcularPendientePromedio(values){
+  if(!Array.isArray(values) || values.length < 2) return 0;
+  const x1 = 1;
+  const x2 = values.length;
+  const y1 = values[0];
+  const y2 = values[values.length-1];
+  const m = (y2 - y1) / (x2 - x1);
+  return Math.round(m * 100) / 100;
+}
+
+/* Util: construye datasets según filtro */
+function buildDatasetFor(filter){
+  if(filter === 'genero'){
+    // Bar grouped: two datasets (niñas, niños)
+    return {
+      type: 'bar',
+      data: {
+        labels: GENERO.labels,
+        datasets: [
+          {
+            label: 'Niñas (%)',
+            data: GENERO.girls,
+            backgroundColor: 'rgba(199,0,0,0.9)',
+            borderRadius: 6
+          },
+          {
+            label: 'Niños (%)',
+            data: GENERO.boys,
+            backgroundColor: 'rgba(33, 150, 243, 0.9)',
+            borderRadius: 6
+          }
+        ]
+      },
+      options: {
+        indexAxis: 'x',
+        scales: {
+          x: { title: { display:true, text: 'Sede (X)' } },
+          y: { beginAtZero:true, title:{ display:true, text: 'Porcentaje (%)' }, max:100 }
+        },
+        plugins: { tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y}%` } } }
+      }
+    };
+  } else if(filter === 'edad'){
+    // Use line (or bar) to show midpoint ages per sede
+    return {
+      type: 'line',
+      data: {
+        labels: EDAD.labels,
+        datasets: [{
+          label: 'Edad (promedio, años)',
+          data: EDAD.midpoints,
+          borderColor: 'rgba(38, 70, 83, 1)',
+          backgroundColor: 'rgba(38,70,83,0.06)',
+          tension: 0.12,
+          pointRadius: 6,
+          pointBackgroundColor: 'rgba(38,70,83,1)',
+          fill:true
+        }]
+      },
+      options: {
+        scales: {
+          x: { title: { display:true, text: 'Sede (X)' } },
+          y: { beginAtZero:false, title:{ display:true, text: 'Edad (años)' } }
+        },
+        plugins: { tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y} años` } } }
+      }
+    };
+  } else if(filter === 'zona'){
+    // Departments per sede (bar)
+    return {
+      type: 'bar',
+      data: {
+        labels: ZONA.labels,
+        datasets: [{
+          label: 'Departamentos por sede',
+          data: ZONA.departamentos,
+          backgroundColor: 'rgba(245, 158, 11, 0.95)',
+          borderRadius: 6
+        }]
+      },
+      options: {
+        scales: {
+          x: { title: { display:true, text: 'Sede (X)' } },
+          y: { beginAtZero:true, title:{ display:true, text: 'Cantidad de departamentos' } }
+        },
+        plugins: { tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y}` } } }
+      }
+    };
+  }
+}
+
+/* Render / update chart in the modal */
+function renderSingleChart(filter){
+  const cfg = buildDatasetFor(filter);
+  const canvas = document.getElementById('singleChart');
+  const ctx = canvas.getContext('2d');
+
+  // compute slope value for interpretation:
+  let valuesForSlope = [];
+  if(filter === 'genero'){
+    // choose girls% as the series to compute slope across sedes
+    valuesForSlope = GENERO.girls.slice();
+  } else if(filter === 'edad'){
+    valuesForSlope = EDAD.midpoints.slice();
+  } else if(filter === 'zona'){
+    valuesForSlope = ZONA.departamentos.slice();
+  }
+
+  if(singleChart) singleChart.destroy();
+
+  // Merge base options (to keep code DRY)
+  const baseOptions = {
+    maintainAspectRatio: false,
+    responsive: true,
+    layout: { padding: 12 },
+    plugins: {
+      legend: { display: true, position: 'top' }
+    }
+  };
+
+  // Use cfg.options merged with baseOptions
+  const finalConfig = {
+    type: cfg.type,
+    data: cfg.data,
+    options: Object.assign({}, baseOptions, cfg.options || {})
+  };
+
+  singleChart = new Chart(ctx, finalConfig);
+
+  // Calculate pendiente promedio (using sedes positions 1..n)
+  const slope = calcularPendientePromedio(valuesForSlope);
+  const slopeEl = document.getElementById('slopeValue');
+  slopeEl.innerText = `Pendiente promedio (m): ${slope} (unidad X por sede)`;
+
+  // Update interpretation text
+  const interp = document.getElementById('chartInterpretation');
+
+  // Provide a friendly math explanation adapted to the filter
+  if(filter === 'genero'){
+    interp.innerHTML = `
+      <strong>Interpretación (Género)</strong><br>
+      Tomamos la serie de % niñas por sede: <em>[${GENERO.girls.join(', ')}]%</em> — la pendiente m =
+      (último - primero) / (posición último - posición primero) = ${valuesForSlope[valuesForSlope.length-1]} - ${valuesForSlope[0]} dividido entre ${valuesForSlope.length - 1} = <strong>${slope}</strong>.
+      <br>Un m positivo indica que, al movernos de izquierda a derecha (de San Salvador a San Miguel en este orden), el porcentaje de niñas tiende a ${slope > 0 ? 'aumentar' : 'disminuir'} ${Math.abs(slope)} unidades por sede en promedio.
+    `;
+  } else if(filter === 'edad'){
+    interp.innerHTML = `
+      <strong>Interpretación (Edad)</strong><br>
+      Usamos los puntos medios de los rangos de edad: <em>[${EDAD.midpoints.join(', ')}] años</em>. La pendiente m =
+      ${valuesForSlope[valuesForSlope.length-1]} - ${valuesForSlope[0]} dividido entre ${valuesForSlope.length - 1} = <strong>${slope}</strong> (años por sede).
+      <br>Esto indica la variación promedio de la edad (punto medio) al moverse entre sedes.
+    `;
+  } else {
+    interp.innerHTML = `
+      <strong>Interpretación (Zona demográfica)</strong><br>
+      Departamentos por sede: <em>[${ZONA.departamentos.join(', ')}]</em>. La pendiente m =
+      ${valuesForSlope[valuesForSlope.length-1]} - ${valuesForSlope[0]} dividido entre ${valuesForSlope.length - 1} = <strong>${slope}</strong> (departamentos por sede).
+      <br>Un m positivo indica un incremento promedio en el número de departamentos por sede al avanzar en el eje X.
+    `;
+  }
+
+  // If genero: make grouped bars (adjust barThickness for readability)
+  if(filter === 'genero'){
+    singleChart.options.scales.x = singleChart.options.scales.x || {};
+    singleChart.options.scales.y = singleChart.options.scales.y || {};
+  }
+}
+
+/* UI: open modal, close modal, filter buttons */
+document.addEventListener('DOMContentLoaded', () => {
+  const openBtn = document.getElementById('openGrafBtn');
+  const modal = document.getElementById('modal-graficas');
+  const closeBtn = document.getElementById('closeModal');
+  const filterBtns = document.querySelectorAll('.filter-btn');
+
+  // Open modal: default filtro 'genero'
+  openBtn.addEventListener('click', () => {
+    modal.style.display = 'flex';
+    modal.setAttribute('aria-hidden','false');
+    // initial render
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    document.querySelector('[data-filter="genero"]').classList.add('active');
+    renderSingleChart('genero');
+    // ensure canvas size triggers
+    setTimeout(()=> {
+      if(singleChart) singleChart.resize();
+    }, 80);
+  });
+
+  closeBtn.addEventListener('click', () => {
+    modal.style.display = 'none';
+    modal.setAttribute('aria-hidden','true');
+    if(singleChart) singleChart.destroy();
+    singleChart = null;
+  });
+
+  // filter buttons
+  filterBtns.forEach(btn=>{
+    btn.addEventListener('click', () => {
+      const f = btn.dataset.filter;
+      filterBtns.forEach(b => b.classList.toggle('active', b === btn));
+      renderSingleChart(f);
+    });
+  });
+
+  // Close modal on ESC
+  document.addEventListener('keydown', (e)=>{
+    if(e.key === 'Escape' && modal.style.display === 'flex'){
+      closeBtn.click();
+    }
+  });
+});
+</script>
+
+</body>
+</html>

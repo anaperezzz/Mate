@@ -1,0 +1,886 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Programa Oportunidades — Interactivo</title>
+
+  <!-- Font Awesome (íconos) -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    :root{
+      --red:#b71c1c;
+      --red-strong:#c62828;
+      --muted:#f5f0ee;
+      --dark:#222;
+      --card:#fff;
+      --accent:#e53935;
+      --grid:#e6eef6; /* tono azul suave para cuadricula */
+      --notebook-grid-1: rgba(0,0,0,0.03);
+      --notebook-grid-2: rgba(0,0,0,0.04);
+      --highlight: #f6c85f;
+      --glass: rgba(255,255,255,0.7);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      background:var(--muted);
+      color:var(--dark);
+      -webkit-font-smoothing:antialiased;
+      -webkit-touch-callout: none;
+    }
+
+    header{
+      text-align:center;
+      padding:28px 16px;
+      background:linear-gradient(90deg,#7f0000,#b71c1c);
+      color:white;
+    }
+    header h1{ margin:0; font-size:28px; letter-spacing:.4px; }
+    header p{ margin:6px 0 0; opacity:.95; max-width:900px; margin-left:auto;margin-right:auto;}
+
+    main.container{
+      display:grid;
+      grid-template-columns: 1fr 360px;
+      gap:20px;
+      max-width:1200px;
+      margin:28px auto;
+      padding:0 16px 60px;
+      align-items:start;
+    }
+
+    /* MAP AREA */
+    .map-panel{
+      background:#8b1b1b;
+      color:white;
+      border-radius:16px;
+      padding:18px;
+      position:relative;
+      min-height:480px;
+      box-shadow:0 8px 30px rgba(0,0,0,.12);
+      overflow:hidden;
+    }
+
+    .map-wrap{ width:100%; height:420px; }
+
+    .cta-box{
+      position:absolute;
+      left:22px;
+      bottom:22px;
+      background:rgba(0,0,0,.45);
+      color:#fff;
+      padding:12px 18px;
+      border-radius:12px;
+      display:flex;
+      align-items:center;
+      gap:12px;
+      max-width:340px;
+      cursor:pointer;
+    }
+    .cta-box .hand{ font-size:22px; opacity:.95 }
+    .cta-box:hover{ transform:translateY(-3px); transition:transform .18s ease;}
+
+    /* Right column (global stats) */
+    .stats-panel{
+      background:var(--card);
+      border-radius:16px;
+      padding:18px;
+      box-shadow:0 8px 30px rgba(0,0,0,.06);
+    }
+
+    .stat-card{
+      display:flex;
+      gap:14px;
+      align-items:center;
+      padding:14px;
+      border-radius:10px;
+      margin-bottom:12px;
+      background:linear-gradient(90deg,#fff,#fff);
+    }
+    .stat-card .icon{
+      width:54px;height:54px;border-radius:12px;
+      background:var(--accent); color:white; display:flex;
+      align-items:center; justify-content:center; font-size:20px;
+    }
+    .stat-card .num{ font-size:22px; font-weight:700; color:var(--red-strong) }
+    .stat-card .text{ font-size:13px; opacity:.9 }
+
+    /* === OVERLAY: ahora el contenido puede desplazarse si es necesario === */
+    #seccion-departamento{
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,.45);
+      display:none;
+      z-index:1200;
+      padding:28px;
+      overflow-y:auto;
+      justify-content:center;
+      align-items:flex-start;
+      animation: fadeIn .18s ease;
+    }
+    @keyframes fadeIn { from {opacity:0} to {opacity:1} }
+
+    /* === CARD DETALLE: se expande según contenido === */
+    .detalle{
+      width:min(1100px,95%);
+      background:#fff;
+      border-radius:20px;
+      box-shadow:0 22px 60px rgba(0,0,0,.35);
+      overflow:visible;
+      display:grid;
+      grid-template-columns:360px 1fr;
+      transform:translateY(6px);
+      transition:transform .18s ease;
+    }
+    #seccion-departamento.show .detalle{ transform:translateY(0); }
+
+    /* Lado izquierdo mejor jerarquía */
+    .detalle .left{
+      background:var(--muted);
+      padding:22px;
+      text-align:center;
+      border-right:1px solid rgba(0,0,0,0.04);
+    }
+    #dept-title{
+      font-size:22px;
+      margin:10px 0;
+      color:var(--red-strong);
+    }
+    #dept-subtext{
+      font-size:13px;
+      opacity:.75;
+      margin-bottom:12px;
+    }
+    /* Bloque de interpretación matemática */
+    .interpretacion{
+      margin-top:14px;
+      background:#fff7f7;
+      border-left:4px solid #b71c1c;
+      padding:10px 14px;
+      border-radius:8px;
+      font-size:13px;
+      text-align:left;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.03);
+      line-height:1.45;
+    }
+
+    /* Botones del gráfico tipo Chips */
+    .chart-controls {
+      display:flex;
+      gap:8px;
+      align-items:center;
+    }
+    .chart-controls button {
+      padding: 6px 12px;
+      border-radius: 22px;
+      border: none;
+      background:#eee;
+      cursor: pointer;
+      font-size:13px;
+      transition:.18s ease;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+    }
+    .chart-controls button:hover{
+      background:#ef4444;
+      color:#fff;
+      transform:translateY(-2px);
+    }
+    .chart-controls button.active{
+      background:var(--red-strong);
+      color:#fff;
+      box-shadow:0 6px 20px rgba(199,0,0,0.12);
+    }
+
+    /* Hide elements removed from UI */
+    #searchInput, #backToMap { display:none !important; }
+
+    /* Imagen Silueta */
+    .silhouette{
+      width:90%;
+      height:260px;
+      background-size:cover;
+      background-position:center;
+      border-radius:8px;
+      box-shadow: inset 0 0 0 6px rgba(199,0,0,.05);
+      margin:0 auto;
+    }
+
+    /* Panel Derecho */
+    .detalle .right{
+      padding:20px;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+
+    /* === ÁREA DE GRÁFICO, estilo cuaderno matemático === */
+    .chart-area{
+      background:#fff;
+      border-radius:10px;
+      padding:18px;
+      border:1px solid #eee;
+      margin-top:8px;
+
+      background-image:
+        linear-gradient(to right, rgba(0,0,0,0.04) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(0,0,0,0.04) 1px, transparent 1px);
+      background-size: 26px 26px;
+      box-shadow: 0 10px 28px rgba(0,0,0,0.04);
+    }
+
+    /* Canvas ESTABLE: se ve COMPLETO */
+    .chart-area canvas{
+      width:100% !important;
+      min-height:430px !important;
+      display:block;
+    }
+
+    /* Note under chart */
+    .chart-note{
+      margin-top:8px;
+      font-size:13px;
+      color:#333;
+      background:#fff8f8;
+      border-left:4px solid var(--red-strong);
+      padding:10px;
+      border-radius:6px;
+    }
+
+    /* Visual badge for slope */
+    .slope-badge{
+      display:inline-flex;
+      gap:8px;
+      align-items:center;
+      padding:8px 10px;
+      border-radius:10px;
+      background:linear-gradient(90deg,#fff,#fff);
+      border:1px solid #eee;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.04);
+      font-weight:700;
+    }
+    .slope-badge .icon{ font-size:18px; color:var(--red-strong) }
+
+    /* Highlight styles */
+    .positive-slope { color: #0a7c1b; font-weight:700; } /* green */
+    .negative-slope { color: #0a4fa7; font-weight:700; } /* blue-ish for desercion reduction */
+
+    /* Close button */
+    .close-detail{
+      position:absolute; right:18px; top:18px;
+      background:#fff; border-radius:10px; padding:8px 12px; cursor:pointer; border:1px solid #ddd;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.06);
+    }
+
+    /* Map SVG styles for dept shapes and markers */
+    svg.map-svg{ width:100%; height:100%; display:block; }
+    .dept{ fill:#b71c1c; stroke:#fff; stroke-width:2; cursor:pointer; transition:transform .12s ease, filter .12s ease; }
+    .dept:hover{ filter:brightness(.9); transform:translateY(-2px); }
+    .marker{ fill:#fff; stroke:#b71c1c; stroke-width:3; cursor:pointer; }
+    .marker-label{ font-size:12px; fill:#fff; pointer-events:none; text-anchor:middle; }
+
+    /* responsive */
+    @media (max-width:960px){
+      main.container{ grid-template-columns: 1fr; }
+      .detalle{ grid-template-columns: 1fr; height:auto; }
+      .silhouette{ height:200px; width:80%; }
+      .chart-area canvas { min-height:300px !important; }
+      .detalle .left { order: 2; }
+      .detalle .right { order: 1; }
+    }
+
+    .stats-panel{
+      background:var(--card);
+      border-radius:18px;
+      padding:22px;
+      box-shadow:0 10px 35px rgba(0,0,0,.08);
+      border:1px solid rgba(0,0,0,.05);
+      backdrop-filter:blur(6px);
+    }
+
+    .panel-title{ font-size:18px; font-weight:700; margin-bottom:16px; color:var(--red-strong); }
+
+    .stat-card {
+      display:flex; gap:16px; align-items:center; padding:16px; border-radius:14px; margin-bottom:14px;
+      background:#fff; transition:.25s ease; border:1px solid rgba(0,0,0,.05);
+    }
+    .stat-card:hover{ transform:translateY(-3px); box-shadow:0 8px 20px rgba(0,0,0,.1); }
+    .stat-card .icon{ width:58px;height:58px;border-radius:14px; background:var(--accent); color:white; display:flex; align-items:center; justify-content:center; font-size:22px; }
+    .stat-card .num{ font-size:24px; font-weight:700; color:var(--red-strong); }
+    .stat-card .text{ font-size:14px; opacity:.85; }
+
+  </style>
+</head>
+<body>
+
+  <header class="hero">
+    <div class="hero-content">
+      <h1>Transformando vidas desde 2007</h1>
+      <p>El Programa Oportunidades empodera a jóvenes salvadoreños a través del acceso a educación, becas y oportunidades laborales.</p>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- Izquierda: mapa -->
+    <section class="map-panel" aria-label="Mapa de El Salvador">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <strong style="font-size:18px">Explora nuestras sedes</strong>
+        <small style="opacity:.85">Haz clic en un departamento</small>
+      </div>
+
+      <div class="map-wrap" id="mapWrap">
+        <!-- SVG simplificado con formas aproximadas para los 4 departamentos -->
+        <svg class="map-svg" viewBox="0 0 900 480" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Mapa interactivo de El Salvador">
+          <rect x="0" y="0" width="900" height="480" fill="#8b1b1b" rx="8" />
+          <path id="santa-ana" class="dept" d="M80,120 C120,80 170,60 220,90 C250,110 210,170 180,200 C150,220 100,180 80,120 Z" data-name="Santa Ana" />
+          <path id="sonsonate" class="dept" d="M140,240 C180,210 230,205 260,230 C290,255 250,300 210,315 C170,330 140,300 140,240 Z" data-name="Sonsonate" />
+          <path id="san-salvador" class="dept" d="M300,140 C340,120 400,120 440,160 C460,180 430,230 390,235 C350,240 320,190 300,140 Z" data-name="San Salvador" />
+          <path id="san-miguel" class="dept" d="M600,200 C660,160 740,150 800,200 C840,230 810,290 760,310 C720,320 670,270 600,200 Z" data-name="San Miguel" />
+          <circle id="m-santa" class="marker" cx="170" cy="120" r="10" data-target="santa-ana"></circle>
+          <text x="170" y="100" class="marker-label">Santa Ana</text>
+          <circle id="m-sonso" class="marker" cx="220" cy="260" r="10" data-target="sonsonate"></circle>
+          <text x="220" y="240" class="marker-label">Sonsonate</text>
+          <circle id="m-ss" class="marker" cx="370" cy="160" r="10" data-target="san-salvador"></circle>
+          <text x="370" y="140" class="marker-label">San Salvador</text>
+          <circle id="m-sm" class="marker" cx="740" cy="230" r="10" data-target="san-miguel"></circle>
+          <text x="740" y="210" class="marker-label">San Miguel</text>
+        </svg>
+      </div>
+
+      <div class="cta-box" id="ctaClick">
+        <div style="font-size:18px">📍</div>
+        <div>
+          <div style="font-weight:700">Explora nuestras sedes</div>
+          <div style="font-size:13px;opacity:.95">Haz clic en cada departamento para ver detalles</div>
+        </div>
+        <div class="hand">🖱️</div>
+      </div>
+    </section>
+
+    <!-- Derecha: estadísticas globales -->
+    <aside class="stats-panel" aria-label="Estadísticas generales del programa">
+      <div class="panel-title">Impactando positivamente a jóvenes</div>
+
+      <div class="stat-card">
+        <div class="icon"><i class="fa-solid fa-people-group"></i></div>
+        <div>
+          <div class="num">389</div>
+          <div class="text">Jóvenes Impactados</div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="icon"><i class="fa-solid fa-graduation-cap"></i></div>
+        <div>
+          <div class="num">394</div>
+          <div class="text">Jovenes matriculados</div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="icon"><i class="fa-solid fa-briefcase"></i></div>
+        <div>
+          <div class="num">301</div>
+          <div class="text">Becas otorgadas</div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="icon"><i class="fa-solid fa-dollar-sign"></i></div>
+        <div>
+          <div class="num">40</div>
+          <div class="text">Universidades con alianzas</div>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <!-- Overlay: sección departamento -->
+  <div id="seccion-departamento" role="dialog" aria-hidden="true">
+    <div class="detalle" role="document">
+      <div class="left">
+        <div class="silhouette" id="silhouette" style="background-image: url('1.jpg'); background-size:cover;"></div>
+        <h3 id="dept-title">Sede - Nombre</h3>
+        <div id="dept-subtext">Sede local del Programa Oportunidades</div>
+
+        <div class="interpretacion" id="interpretacion">
+          <!-- This will be updated dynamically per sede -->
+          📊 <strong>Interpretación matemática de la tendencia:</strong><br><br>
+          • El gráfico es un Plano Cartesiano (Año vs. Valor).<br>
+          • La pendiente promedio calculada es <strong class="positive-slope">+25 jóvenes/año</strong>.<br>
+          • Fórmula aplicada:<br>
+          <em>m = (y_final − y_inicial) / (x_final − x_inicial)</em>.<br><br>
+          ⭐ <strong>Punto destacado:</strong> Año — "Mayor crecimiento" (ver detalle en la gráfica).
+        </div>
+      </div>
+
+      <div class="right">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div style="font-weight:700; font-size:18px">Detalles de la sede</div>
+          <button class="close-detail" id="closeDept" aria-label="Cerrar ventana">Cerrar ✕</button>
+        </div>
+
+        <div class="desc" id="dept-desc">
+          <!-- Texto descriptivo cargado por JS -->
+        </div>
+
+        <div class="stats-list" id="dept-stats">
+          <!-- Lista de estadísticas destacadas -->
+        </div>
+
+        <div class="chart-area">
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <div style="display:flex; gap:12px; align-items:center;">
+              <strong>Gráfico de estadísticas (2019–2024)</strong>
+              <div class="slope-badge" id="slopeBadge" title="Pendiente promedio">
+                <span class="icon">📈</span>
+                <span id="slopeText">Pendiente: —</span>
+              </div>
+            </div>
+            <div class="chart-controls" id="chartControls">
+              <button data-filter="impactados" class="active">Jóvenes impactados</button>
+              <button data-filter="matriculas">Matrículas</button>
+              <button data-filter="becas">Becas</button>
+              <button data-filter="desercion">Deserción</button>
+            </div>
+          </div>
+
+          <canvas id="graficoEstadisticas" style="max-height:520px;width:100%;"></canvas>
+
+          <!-- Nota matemática sobre pendiente -->
+          <div class="chart-note" id="chartNote">
+            La <strong>pendiente</strong> de esta línea representa la <strong>tasa de cambio</strong> de la métrica seleccionada a lo largo del tiempo.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer style="text-align:center;padding:20px 12px;opacity:.85;">
+    © 2025 Programa Oportunidades — Demo interactiva
+  </footer>
+
+<script>
+  // ---------- Datos base de sedes (incluí tus métricas finales adaptadas) ----------
+  const TABLE_DATA = {
+    "San Salvador": {
+      impactados: 110,
+      matriculados: 110,
+      becasTotales: 0, // no tiene en tu fila, dejar 0
+      genero: "60% niñas, 40% niños",
+      edades: "14-17",
+      zona: "4 dptos",
+      universidades: 16
+    },
+    "Santa Ana": {
+      impactados: 125,
+      matriculados: 125,
+      becasTotales: 101,
+      genero: "67 niñas, 40 niños",
+      edades: "17-19 años",
+      zona: "4 departamentos",
+      universidades: 5
+    },
+    "Sonsonate": {
+      impactados: 49,
+      matriculados: 54,
+      becasTotales: 47,
+      genero: "F=28, M=21",
+      edades: "30-17 años, 19-18 años",
+      zona: "16",
+      universidades: 16
+    },
+    "San Miguel": {
+      impactados: 105,
+      matriculados: 105,
+      becasTotales: 43,
+      genero: "F=26, M=22",
+      edades: "17-19 años",
+      zona: "4 dptos",
+      universidades: 3
+    }
+  };
+
+  // ---------- Datos simulados por departamento (2019 a 2024) ----------
+  const DATA = {
+    "Santa Ana": {
+      desc: "La sede de Santa Ana acompaña a jóvenes de la zona occidental, brindando formación técnica y apoyo académico.",
+      stats: [
+        "Más de 500 estudiantes activos",
+        "120 becas otorgadas en 2025",
+        "Tasa de deserción reducida en un 15%",
+        "40 docentes involucrados"
+      ],
+      silhouette: "2.jpg",
+      charts: {
+        impactados: [50, 65, 80, 95, 110, 130],
+        matriculas: [70, 78, 85, 92, 102, 110],
+        becas: [8, 12, 18, 24, 30, 42],
+        desercion: [9, 8, 7, 6, 5, 4]
+      }
+    },
+    "Sonsonate": {
+      desc: "La sede de Sonsonate impulsa formación técnico-práctica y conexión con empresas locales.",
+      stats: [
+        "Aprox. 420 estudiantes activos",
+        "95 becas otorgadas en 2025",
+        "Programas de formación dual en 12 empresas",
+        "30 docentes capacitados"
+      ],
+      silhouette: "2.jpg",
+      charts: {
+        impactados: [30, 45, 58, 68, 80, 96],
+        matriculas: [55, 65, 73, 82, 90, 98],
+        becas: [6, 9, 13, 17, 22, 28],
+        desercion: [11, 10, 9, 8, 7, 5]
+      }
+    },
+    "San Salvador": {
+      desc: "La sede San Salvador ofrece formación técnica avanzada y redes con instituciones educativas.",
+      stats: [
+        "Más de 1,200 estudiantes atendidos",
+        "450 colocaciones en programas de pasantías",
+        "200 becas para formación técnica",
+        "60 docentes en programas de actualización"
+      ],
+      silhouette: "2.jpg",
+      charts: {
+        impactados: [200, 240, 290, 330, 380, 440],
+        matriculas: [210, 230, 250, 275, 300, 330],
+        becas: [25, 40, 65, 85, 110, 150],
+        desercion: [14, 13, 12, 11, 9, 7]
+      }
+    },
+    "San Miguel": {
+      desc: "La sede San Miguel se centra en la formación en oficios y la inserción laboral en la zona oriente.",
+      stats: [
+        "Más de 650 estudiantes activos",
+        "200 colocaciones laborales en 2025",
+        "150 becas de estudio técnico",
+        "45 alianzas con empresas locales"
+      ],
+      silhouette: "2.jpg",
+      charts: {
+        impactados: [70, 90, 115, 140, 165, 195],
+        matriculas: [75, 88, 104, 120, 137, 155],
+        becas: [10, 15, 22, 30, 40, 55],
+        desercion: [10, 9, 8, 7, 6, 4]
+      }
+    }
+  };
+
+  // Chart.js instance
+  let chart = null;
+  let currentDept = null;
+  let currentFilter = 'impactados';
+
+  // UTIL: abrir detalle
+  function openDept(deptName){
+    const info = DATA[deptName];
+    if(!info) return;
+    currentDept = deptName;
+
+    // título y subtítulo
+    document.getElementById('dept-title').textContent = `Sede ${deptName}`;
+    document.getElementById('dept-subtext').textContent = `Sede local del Programa Oportunidades — ${deptName}`;
+
+    // descripción + datos tabulares (usando TABLE_DATA)
+    document.getElementById('dept-desc').innerHTML = `<p style="margin:0 0 8px 0">${info.desc}</p>`;
+
+    // Mostrar métricas resumidas (basadas en tabla final que diste)
+    const t = TABLE_DATA[deptName] || {};
+    const statsHtml = [
+      `Jóvenes impactados (registro final): ${t.impactados ?? '—'}`,
+      `Jóvenes matriculados (registro final): ${t.matriculados ?? '—'}`,
+      `Becas totales (desde creación): ${t.becasTotales ?? '—'}`,
+      `Distribución por género: ${t.genero ?? '—'}`,
+      `Distribución por edad: ${t.edades ?? '—'}`,
+      `Distribución por zona: ${t.zona ?? '—'}`,
+      `Universidades con alianza: ${t.universidades ?? '—'}`
+    ].map(s => `<li style="margin:6px 0">• ${s}</li>`).join('');
+    document.getElementById('dept-stats').innerHTML = `<ul style="padding-left:14px;margin:0">${statsHtml}</ul>`;
+
+    // silhouette image
+    const sil = document.getElementById('silhouette');
+    sil.style.backgroundImage = `url('${info.silhouette}')`;
+
+    // show overlay
+    const overlay = document.getElementById('seccion-departamento');
+    overlay.style.display = 'flex';
+    overlay.classList.add('show');
+    overlay.setAttribute('aria-hidden','false');
+
+    // init chart: default impactados and render
+    currentFilter = 'impactados';
+    setActiveFilterButton(currentFilter);
+    renderChartFor(currentDept, currentFilter);
+  }
+
+  function closeDept(){
+    const overlay = document.getElementById('seccion-departamento');
+    overlay.style.display = 'none';
+    overlay.classList.remove('show');
+    overlay.setAttribute('aria-hidden','true');
+    if(chart) { chart.destroy(); chart = null; }
+  }
+
+  // ---------- FUNCIÓN PRINCIPAL: renderChartFor (mejorada) ----------
+  function renderChartFor(deptName, filter){
+    const info = DATA[deptName];
+    if(!info) return null;
+
+    // Etiquetas de años (X)
+    const labels = ['2019','2020','2021','2022','2023','2024'];
+    const startYear = Number(labels[0]);
+    const endYear = Number(labels[labels.length - 1]);
+    const yearsDiff = endYear - startYear; // 5
+
+    // Datos (clon)
+    const data = (info.charts[filter] || []).slice();
+
+    // Mapas y unidades
+    const labelMap = {
+      impactados: 'Jóvenes Impactados',
+      matriculas: 'Matrículas',
+      becas: 'Becas Otorgadas',
+      desercion: 'Tasa de Deserción'
+    };
+    const yTitleMap = {
+      impactados: 'Cantidad de Jóvenes',
+      matriculas: 'Cantidad de Matrículas',
+      becas: 'Cantidad de Becas',
+      desercion: 'Porcentaje / Nº'
+    };
+    const unitMap = {
+      impactados: 'jóvenes/año',
+      matriculas: 'matrículas/año',
+      becas: 'becas/año',
+      desercion: 'puntos/año'
+    };
+
+    const red = 'rgba(220,53,69,1)';
+    const redFill = 'rgba(220,53,69,0.08)';
+    const blue = 'rgba(33, 150, 243, 1)';
+    const blueFill = 'rgba(33,150,243,0.08)';
+    const highlightColor = 'rgba(246,200,95,1)'; // dorado para mayor crecimiento
+
+    const isDesercion = (filter === 'desercion');
+    const lineColor = isDesercion ? blue : red;
+    const areaFill  = isDesercion ? blueFill : redFill;
+
+    // Cálculo de pendiente promedio m = (y_final - y_inicial) / (x_final - x_inicial)
+    const firstY = data[0] ?? 0;
+    const lastY  = data[data.length - 1] ?? 0;
+    const pendiente = (lastY - firstY) / (yearsDiff || 1);
+    const pendRounded = Math.round(pendiente * 100) / 100;
+
+    // Calcular incrementos año a año y detectar mayor crecimiento
+    const deltas = [];
+    for(let i=1;i<data.length;i++){
+      deltas.push(data[i] - data[i-1]);
+    }
+    let maxDiff = -Infinity;
+    let maxDiffIndex = -1;
+    deltas.forEach((d, idx) => {
+      if (d > maxDiff) { maxDiff = d; maxDiffIndex = idx + 1; }
+    });
+    if(maxDiffIndex === -1) maxDiffIndex = 0;
+
+    // Preparar arrays para colores y radios por punto
+    const pointBg = data.map((v,i) => (i === maxDiffIndex ? highlightColor : '#fff'));
+    const pointBorderColor = data.map((v,i) => (i === maxDiffIndex ? '#8a5c10' : lineColor));
+    const pointRadius = data.map((v,i) => (i === maxDiffIndex ? 9 : 6));
+
+    // prepare canvas context
+    const ctx = document.getElementById('graficoEstadisticas').getContext('2d');
+    if(chart) chart.destroy();
+
+    chart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [{
+          label: labelMap[filter] || 'Evolución',
+          data,
+          borderColor: lineColor,
+          backgroundColor: areaFill,
+          borderWidth: 3,
+          pointRadius: pointRadius,
+          pointBackgroundColor: pointBg,
+          pointBorderColor: pointBorderColor,
+          pointBorderWidth: 2,
+          pointHoverRadius: 10,
+          tension: 0.12,
+          fill: true
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        layout: { padding: { top: 18, right: 18, bottom: 18, left: 6 } },
+        scales: {
+          x: {
+            title: { display: true, text: 'Año (X)', font: { weight: '700' } },
+            grid: { color: 'rgba(200,215,235,0.9)', drawBorder: false },
+            ticks: { maxRotation: 0, autoSkip: false }
+          },
+          y: {
+            beginAtZero: true,
+            title: { display: true, text: yTitleMap[filter] || 'Valor (Y)', font: { weight: '700' } },
+            grid: { color: 'rgba(200,215,235,0.9)', borderDash: [2,2] },
+            ticks: {
+              callback: function(value){ return value; }
+            }
+          }
+        },
+        plugins: {
+          legend: { display: true, position: 'top' },
+          tooltip: {
+            enabled: true,
+            mode: 'nearest',
+            intersect: true,
+            callbacks: {
+              title: function(items){ return `Año: ${items[0].label}`; },
+              label: function(ctx){
+                const idx = ctx.dataIndex;
+                const val = ctx.parsed.y;
+                let deltaText = '';
+                if(idx > 0){
+                  const delta = val - (ctx.chart.data.datasets[0].data[idx-1]);
+                  const sign = delta >= 0 ? '+' : '';
+                  deltaText = ` (Cambio vs año anterior: ${sign}${Math.round(delta*100)/100})`;
+                } else { deltaText = ' (Punto inicial)'; }
+                return `${ctx.dataset.label}: ${val}${deltaText}`;
+              },
+              afterBody: function(ctx){
+                const idx = ctx[0].dataIndex;
+                if(idx > 0){
+                  const y1 = ctx[0].chart.data.datasets[0].data[idx-1];
+                  const y2 = ctx[0].parsed.y;
+                  const x1 = Number(labels[idx-1]);
+                  const x2 = Number(labels[idx]);
+                  const slopePartial = Math.round(((y2 - y1) / (x2 - x1)) * 100) / 100;
+                  return `Pendiente parcial: ${slopePartial} ${unitMap[filter]}`;
+                }
+                return '';
+              }
+            }
+          }
+        },
+        elements: {
+          point: { hoverBorderWidth: 3 },
+          line: { tension: 0.12 }
+        },
+        interaction: { mode: 'nearest', axis: 'x', intersect: false }
+      }
+    });
+
+    // Update slope badge and interpretation block
+    const slopeBadgeEl = document.getElementById('slopeText');
+    const sign = pendRounded > 0 ? '+' : '';
+    const unit = unitMap[filter] || 'unidad/año';
+    slopeBadgeEl.innerText = `Pendiente promedio: ${sign}${pendRounded} ${unit}`;
+
+    const noteEl = document.getElementById('interpretacion');
+    // Build friendly interpretation text using computed values and data labels
+    const highlightYear = labels[maxDiffIndex] || labels[labels.length - 1];
+    const incText = Number.isFinite(maxDiff) ? `${Math.round(maxDiff*100)/100}` : '—';
+    noteEl.innerHTML = `
+      📊 <strong>Interpretación matemática de la tendencia:</strong><br><br>
+      • El gráfico es un <strong>Plano Cartesiano</strong> (Año vs. Valor).<br>
+      • La pendiente promedio calculada es <strong class="${pendiente < 0 ? 'negative-slope' : 'positive-slope'}">${sign}${pendRounded} ${unit}</strong>.<br>
+      • Fórmula aplicada: <em>m = (y_final − y_inicial) / (x_final − x_inicial)</em> = (${lastY} − ${firstY}) / (${endYear} − ${startYear}) = ${Math.round(pendiente*100)/100}.<br><br>
+      ⭐ <strong>Punto destacado:</strong> ${highlightYear} — "Mayor crecimiento" (+${incText} respecto al año anterior).
+    `;
+
+    // visual cue on slope badge
+    const badgeParent = document.getElementById('slopeBadge');
+    if(pendiente < 0){
+      badgeParent.style.border = '1px solid rgba(33,150,243,0.12)';
+      badgeParent.style.background = '#f6fbff';
+      slopeBadgeEl.className = 'negative-slope';
+    } else {
+      badgeParent.style.border = '1px solid rgba(220,53,69,0.06)';
+      badgeParent.style.background = '#fff8f8';
+      slopeBadgeEl.className = 'positive-slope';
+    }
+
+    return { pendiente };
+  }
+
+  // Set active filter UI
+  function setActiveFilterButton(filter){
+    document.querySelectorAll('#chartControls button').forEach(btn=>{
+      btn.classList.toggle('active', btn.dataset.filter === filter);
+    });
+  }
+
+  // Attach click handlers to svg paths and markers
+  function setupMapListeners(){
+    const interactive = document.querySelectorAll('.dept, .marker');
+    interactive.forEach(el=>{
+      el.addEventListener('click', (ev)=>{
+        // map id -> name
+        const idToName = {
+          'santa-ana':'Santa Ana',
+          'sonsonate':'Sonsonate',
+          'san-salvador':'San Salvador',
+          'san-miguel':'San Miguel',
+          'm-santa':'Santa Ana',
+          'm-sonso':'Sonsonate',
+          'm-ss':'San Salvador',
+          'm-sm':'San Miguel'
+        };
+        const deptName = idToName[el.id] || (el.dataset && (idToName[el.dataset.target] || el.dataset.name));
+        if(deptName) openDept(deptName);
+      });
+    });
+  }
+
+  // Init & event safety checks
+  document.addEventListener('DOMContentLoaded', ()=>{
+    setupMapListeners();
+
+    const chartControls = document.getElementById('chartControls');
+    if(chartControls){
+      chartControls.addEventListener('click', (e)=>{
+        const btn = e.target.closest('button');
+        if(!btn) return;
+        const filter = btn.dataset.filter;
+        if(!filter) return;
+        currentFilter = filter;
+        setActiveFilterButton(filter);
+        if(currentDept){
+          renderChartFor(currentDept, filter);
+        }
+      });
+    }
+
+    const closeBtn = document.getElementById('closeDept');
+    if(closeBtn) closeBtn.addEventListener('click', closeDept);
+
+    // CTA: scroll into view (optional)
+    const cta = document.getElementById('ctaClick');
+    if(cta){
+      cta.addEventListener('click', ()=>{ document.getElementById('mapWrap').scrollIntoView({behavior:'smooth', block:'center'}); });
+    }
+
+    // Preload canvas width to reduce jumps
+    const canvas = document.getElementById('graficoEstadisticas');
+    if(canvas) canvas.width = canvas.clientWidth;
+  });
+
+  // Keyboard accessibility: ESC to close overlay
+  document.addEventListener('keydown', (e)=>{
+    const overlay = document.getElementById('seccion-departamento');
+    if(e.key === 'Escape' && overlay && overlay.style.display === 'flex'){
+      closeDept();
+    }
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Click y Crea | Plataforma Educativa</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+body {
+  margin: 0;
+  font-family: 'Poppins', sans-serif;
+  background: linear-gradient(135deg, #87CEEB, #1E90FF);
+  color: #2E4053;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+}
+
+/* HEADER */
+header {
+  text-align: center;
+  background: #FFE66D;
+  padding: 30px 15px;
+  box-shadow: 0 4px 10px rgba(0,0,0,.1);
+}
+header h1 {
+  color: #FF6B6B;
+  font-size: 2.2rem;
+  margin-bottom: 10px;
+}
+
+/* SECCIONES */
+section {
+  width: min(1000px, 90%);
+  margin: 40px auto;
+  background: rgba(255,255,255,0.95);
+  border-radius: 20px;
+  padding: 35px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+  border-left: 8px solid #FFE66D;
+}
+h2 {
+  color: #1E90FF;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+/* TARJETAS */
+.card-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+  gap: 25px;
+}
+.card {
+  background: #cad1feff;
+  border-radius: 18px;
+  padding: 25px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  transition: transform .25s ease;
+}
+.card:hover { transform: scale(1.02); }
+.card h3 {
+  color: #FF6B6B;
+  margin-bottom: 10px;
+}
+ul { list-style: none; padding: 0; }
+ul li { margin: 8px 0; }
+ul li::before {
+  content: "• ";
+  color: #FF6B6B;
+  font-weight: 700;
+}
+
+/* PDF TARJETAS */
+.pdf-area {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+  margin-top: 25px;
+}
+.pdf-card {
+  background: #e1dcbfff;
+  border-radius: 18px;
+  padding: 20px;
+  text-align: center;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  transition: transform .25s ease;
+}
+.pdf-card:hover { transform: scale(1.03); }
+.pdf-card h3 { color: #1E90FF; margin-bottom: 10px; }
+.pdf-card a {
+  display: inline-block;
+  margin-top: 8px;
+  background: #FF6B6B;
+  color: #fff;
+  text-decoration: none;
+  padding: 8px 16px;
+  border-radius: 10px;
+  font-weight: 600;
+  box-shadow: 0 3px 0 #E91E63;
+}
+.pdf-card a:hover { background: #FF5252; }
+
+/* FOOTER */
+footer {
+  text-align: center;
+  background: #1E90FF;
+  color: white;
+  padding: 15px;
+  margin-top: 40px;
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1><i class="fa-solid fa-people-group"></i> Plataforma para Padres y Profesores</h1>
+  <p>Acompañando la educación desde la orientación y el aprendizaje activo</p>
+</header>
+
+<section>
+  <div class="card-row">
+    <div class="card">
+      <h3><i class="fa-solid fa-bullseye"></i> Objetivo</h3>
+      <p>Enseñar lógica y pensamiento computacional a niños mediante actividades guiadas.</p>
+      <ul>
+        <li>Desarrollar pensamiento lógico</li>
+        <li>Resolver problemas mediante juegos</li>
+        <li>Aprender programación de forma natural</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3><i class="fa-solid fa-book"></i> Guía de Uso</h3>
+      <p>Recomendaciones para acompañar el proceso:</p>
+      <ul>
+        <li>Supervisar en las primeras sesiones</li>
+        <li>Tiempo máximo sugerido: 30 min</li>
+        <li>Reflexionar sobre lo aprendido</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><i class="fa-solid fa-file-pdf"></i> Material en PDF</h2>
+  <div class="pdf-area">
+    <div class="pdf-card"><h3>Tema 1</h3><p>Pensamiento Lógico</p><a href="#">Descargar</a></div>
+    <div class="pdf-card"><h3>Tema 2</h3><p>Orden y Secuencia</p><a href="#">Descargar</a></div>
+    <div class="pdf-card"><h3>Tema 3</h3><p>Algoritmos</p><a href="#">Descargar</a></div>
+    <div class="pdf-card"><h3>Tema 4</h3><p>Matemáticas</p><a href="#">Descargar</a></div>
+  </div>
+</section>
+
+<footer>
+  <p>&copy; 2025 Click y Crea | Plataforma Educativa</p>
+</footer>
+
+</body>
+</html>
